@@ -1,0 +1,23 @@
+# Idea Projects #
+###################
+*.iml
+.idea
+
+# Maven target #
+###################
+target
+
+# gradle project #
+###################
+.gradle
+
+#s4 tmp dir and build dir #
+###################
+tmp
+build
+
+.settings
+.classpath
+.project
+bin
+
