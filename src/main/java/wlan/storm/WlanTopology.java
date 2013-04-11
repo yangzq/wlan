@@ -46,13 +46,16 @@ public class WlanTopology {
         String signallingSpout = "signallingSpout";
         String preconditionBolt = "preconditionBolt";
         String wapBolt = "wapBolt";
+        String smsBolt = "smsBolt";
         builder.setSpout(signallingSpout, new SignallingSpout(5002));
 
-        builder.setBolt(preconditionBolt, new PreconditionBolt(), 2)
+        builder.setBolt(preconditionBolt, new PreconditionBolt(), 1)
                 .fieldsGrouping(signallingSpout, SignallingSpout.SIGNALLING, new Fields("imsi"));
-        builder.setBolt(wapBolt, new WapBolt(), 3)
+        builder.setBolt(wapBolt, new WapBolt(), 1)
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.PRECONDITION, new Fields("imsi"))
                 .allGrouping(preconditionBolt, PreconditionBolt.UPDATETIME);
+        builder.setBolt(smsBolt, new SmsBolt(), 1)
+                .globalGrouping(wapBolt, WapBolt.WAPSTREAM);
         return builder;
     }
 }

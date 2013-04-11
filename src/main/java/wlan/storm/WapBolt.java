@@ -12,7 +12,6 @@ import backtype.storm.tuple.Values;
 import org.apache.commons.lang.StringUtils;
 import wlan.util.EventTypeConst;
 
-import java.net.SocketPermission;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -26,44 +25,65 @@ import java.util.*;
 public class WapBolt extends BaseBasicBolt {
     private BasicOutputCollector outputCollector;
     public static final String WAPSTREAM = "wapStream";
-    private Map userMap = new HashMap<String, Set<Long>>();
+    private Map userMap = new HashMap<String, UserData>();
     private final long timeInterval = 15 * 60 * 1000L;
-    private long nowTime;
+    private long nowTime = 0L;
+//    private long connTime = 0L;
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         this.outputCollector = collector;
-        if (input.getSourceStreamId().equals(PreconditionBolt.PRECONDITION)){
+        if (input.getSourceStreamId().equals(PreconditionBolt.PRECONDITION)) {
             String imsi = input.getString(0);
             String eventType = input.getString(1);
             long time = input.getLong(2);
             if (time < nowTime - timeInterval) return;
-//            if (eventType.equals(EventTypeConst.EVENT_WAP_CONN) || eventType.equals(EventTypeConst.EVENT_WAP_USE)) {
-            if (eventType.equals(EventTypeConst.EVENT_WAP_USE)) {
-                HashSet<Long> timeUse = (HashSet<Long>) userMap.get(imsi);
-                if (timeUse == null) {
-                    timeUse = new HashSet<Long>();
+            if (eventType.equals(EventTypeConst.EVENT_WAP_CONN)) {
+                if (userMap.containsKey(imsi)) {
+                    userMap.remove(imsi);
                 }
-                timeUse.add(time);
-                removeOutTime(timeUse, time);
-                boolean match = checkUser(timeUse);
+                UserData userData = new UserData(time, new HashSet<Long>());
+                userMap.put(imsi, userData);
+//                connTime = time;
+            } else if (eventType.equals(EventTypeConst.EVENT_WAP_USE)) {
+                UserData userData = (UserData) userMap.get(imsi);
+                if (userData == null){
+                    userData = new UserData(0, new HashSet<Long>());
+                }
+                if (userData.getTimeUseSet() == null) {
+                    userData.setTimeUseSet(new HashSet<Long>());
+                }
+                if (userData.getConnTime() == 0L) {
+                    userData.setConnTime(time);
+                }
+                userMap.put(imsi, userData);
+
+                HashSet<Long> timeUseSet = (HashSet<Long>) userData.getTimeUseSet();
+                timeUseSet.add(time);
+                removeOutTime(timeUseSet, time);
+                userData.setTimeUseSet(timeUseSet);
+                boolean match = checkUser(userData, time);
                 if (match) {
                     userMap.remove(imsi);
-                    collector.emit(WAPSTREAM, new Values(imsi, time));
                     try {
-                        System.out.println(String.format("match: %s, time: %s", imsi, getTime(time)));
+                        System.out.println(String.format("match: %s, signal time:%s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeUseSet.toArray()), ","), getTime(time), time));
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
+                    outputCollector.emit(WAPSTREAM, new Values(imsi, time));
                 } else {
-                    userMap.put(imsi, timeUse);
-                    System.out.println(String.format("add time: %s : %s", imsi, StringUtils.join(getTimeArr(timeUse.toArray()), ",")));
+                    userMap.put(imsi, userData);
+                    try {
+                        System.out.println(String.format("add time: %s : %s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeUseSet.toArray()), ","), getTime(time), time));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
                 }
-            } else if (eventType.equals(EventTypeConst.EVENT_WAP_DISCONN)){
+            } else if (eventType.equals(EventTypeConst.EVENT_WAP_DISCONN)) {
                 userMap.remove(imsi);
                 // 考虑乱序，只删除断开连接信令时间之前的信令
                 try {
-                    System.out.println(String.format("remove from userMap: %s, time: %s", imsi, getTime(time)));
+                    System.out.println(String.format("remove from userMap: %s, on time: %s/%s", imsi, getTime(time), time));
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -77,18 +97,20 @@ public class WapBolt extends BaseBasicBolt {
 
     }
 
-    private boolean checkUser(HashSet<Long> timeUse) {
-        boolean result =  false;
-        if (!(timeUse.size() < 20)){
-            result = true;
+    private boolean checkUser(UserData userData, long time) {
+        boolean result = false;
+        if (!(time < userData.getConnTime() + timeInterval)) {
+            if (!(userData.getTimeUseSet().size() < 20)) {
+                result = true;
+            }
         }
         return result;
     }
 
     private void removeOutTime(HashSet<Long> timeUseSet, long time) {
         Iterator iterator = timeUseSet.iterator();
-        while (iterator.hasNext()){
-            Long exTime = (Long)iterator.next();
+        while (iterator.hasNext()) {
+            Long exTime = (Long) iterator.next();
             if (exTime < time - timeInterval) {
                 iterator.remove();
             }
@@ -96,9 +118,27 @@ public class WapBolt extends BaseBasicBolt {
     }
 
     private void updateGlobalTime(long time) {
-        for (Object imsi: userMap.keySet()) {
-            HashSet<Long> timeSet = (HashSet<Long>)userMap.get(imsi);
+//        if (time == 1357892751000L) {
+//            System.out.println();
+//        }
+        for (Iterator iterator = userMap.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            String imsi = (String) entry.getKey();
+            UserData userData = (UserData) entry.getValue();
+            HashSet<Long> timeSet = (HashSet<Long>) userData.getTimeUseSet();
             removeOutTime(timeSet, time);
+            userData.setTimeUseSet(timeSet);
+            userMap.put(imsi, userData);
+            boolean matched = checkUser(userData, time);
+            if (matched) {
+                iterator.remove();
+                outputCollector.emit(WAPSTREAM, new Values(imsi, time));
+                try {
+                    System.out.println(String.format("match: %s, signal time:%s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeSet.toArray()), ","), getTime(time), time));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -108,18 +148,44 @@ public class WapBolt extends BaseBasicBolt {
     }
 
     private static String getTime(long s) throws ParseException {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(s - TimeZone.getDefault().getRawOffset()));
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(s - TimeZone.getDefault().getRawOffset()));
     }
 
-    private String[] getTimeArr(Object[] mmArr){
+    private String[] getTimeArr(Object[] mmArr) {
         String[] fromatTime = new String[mmArr.length];
         for (int i = 0; i < mmArr.length; i++) {
             try {
-                fromatTime[i] = getTime((Long)mmArr[i]);
+                fromatTime[i] = getTime((Long) mmArr[i]);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
         }
         return fromatTime;
+    }
+
+    public class UserData {
+        private long connTime = 0L;
+        private Set<Long> timeUseSet = new HashSet<Long>();
+
+        public UserData(long connTime, Set<Long> timeUseSet) {
+            this.connTime = connTime;
+            this.timeUseSet = timeUseSet;
+        }
+
+        public long getConnTime() {
+            return connTime;
+        }
+
+        public void setConnTime(long connTime) {
+            this.connTime = connTime;
+        }
+
+        public Set<Long> getTimeUseSet() {
+            return timeUseSet;
+        }
+
+        public void setTimeUseSet(Set<Long> timeUseSet) {
+            this.timeUseSet = timeUseSet;
+        }
     }
 }

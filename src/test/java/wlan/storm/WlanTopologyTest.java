@@ -116,10 +116,13 @@ public class WlanTopologyTest {
         Sender sender = new Sender(5002);
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("data.csv")));
+//            String filePath = "/tmp/100001000002068.csv";
+            String filePath = "/data.csv";
+            reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(filePath)));
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                String signal = line.substring(0, line.lastIndexOf(","));
+                String signal = line.substring(0, line.indexOf("calling") - 1);
                 sender.send(signal);
+                System.out.println("send:" + line);
             }
         } finally {
             if (reader != null) {
