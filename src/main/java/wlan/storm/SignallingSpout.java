@@ -43,7 +43,7 @@ public class SignallingSpout extends BaseRichSpout {
         NioServer.Listener listener = new NioServer.Listener() {
             @Override
             public void messageReceived(String message) throws Exception {
-                if (logger.isInfoEnabled()){
+                if (logger.isInfoEnabled()) {
                     logger.info(String.format("spout received:%s", message));
                 }
                 queue.put(message); // 往队列中添加信令时阻塞以保证数据不丢失
@@ -60,7 +60,7 @@ public class SignallingSpout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
-        String message =null;
+        String message = null;
         while ((message = queue.poll()) != null) {
             String[] columns = message.split(",");
             Values tuple = new Values(columns[0], columns[1], Long.parseLong(columns[2]), columns[4], columns[5]);
@@ -68,7 +68,7 @@ public class SignallingSpout extends BaseRichSpout {
                 logger.debug(format("[%s]:%s", SIGNALLING, tuple.toString()));
             }
             spoutOutputCollector.emit(SIGNALLING, tuple);
-            if (logger.isInfoEnabled()){
+            if (logger.isInfoEnabled()) {
                 logger.info(String.format("spout sent:%s,%s,%s", tuple.get(0), tuple.get(1), tuple.get(2)));
             }
         }
@@ -79,7 +79,7 @@ public class SignallingSpout extends BaseRichSpout {
         try {
             nioServer.stop();
         } catch (IOException e) {
-            if (logger.isWarnEnabled()){
+            if (logger.isWarnEnabled()) {
                 logger.warn("error when stop nioServer", e);
             }
         }
@@ -88,7 +88,7 @@ public class SignallingSpout extends BaseRichSpout {
     @Override
     public void ack(Object msgId) {
         super.ack(msgId);
-        if (logger.isDebugEnabled()){
+        if (logger.isDebugEnabled()) {
             logger.debug("successfully ack(): " + msgId.toString());
         }
     }
@@ -96,7 +96,7 @@ public class SignallingSpout extends BaseRichSpout {
     @Override
     public void fail(Object msgId) {
         super.fail(msgId);
-        if (logger.isErrorEnabled()){
+        if (logger.isErrorEnabled()) {
             logger.error("fail(): " + msgId.toString());
         }
     }

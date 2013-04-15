@@ -27,7 +27,7 @@ public class WlanTopology {
             System.out.println("Remote mode");
             conf.setNumWorkers(10);
             conf.setMaxSpoutPending(100);
-            conf.setNumAckers(4);
+            conf.setNumAckers(5);
             conf.setMessageTimeoutSecs(5);
             StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
         } else {
@@ -43,14 +43,17 @@ public class WlanTopology {
 
     public static TopologyBuilder getTopologyBuilder() {
         TopologyBuilder builder = new TopologyBuilder();
-        String signallingSpout = "signallingSpout";
+        String signallingSpout1 = "signallingSpout1";
+        String signallingSpout2 = "signallingSpout2";
         String preconditionBolt = "preconditionBolt";
         String wapBolt = "wapBolt";
         String smsBolt = "smsBolt";
-        builder.setSpout(signallingSpout, new SignallingSpout(5002));
+        builder.setSpout(signallingSpout1, new SignallingSpout(5002));
+        builder.setSpout(signallingSpout2, new SignallingSpout(5003));
 
         builder.setBolt(preconditionBolt, new PreconditionBolt(), 1)
-                .fieldsGrouping(signallingSpout, SignallingSpout.SIGNALLING, new Fields("imsi"));
+                .fieldsGrouping(signallingSpout1, SignallingSpout.SIGNALLING, new Fields("imsi"))
+                .fieldsGrouping(signallingSpout2, SignallingSpout.SIGNALLING, new Fields("imsi"));
         builder.setBolt(wapBolt, new WapBolt(), 1)
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.PRECONDITION, new Fields("imsi"))
                 .allGrouping(preconditionBolt, PreconditionBolt.UPDATETIME);

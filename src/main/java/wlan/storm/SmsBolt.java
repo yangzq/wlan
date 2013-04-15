@@ -21,6 +21,7 @@ import java.util.TimeZone;
  */
 public class SmsBolt extends BaseBasicBolt {
     private Logger logger = LoggerFactory.getLogger(SmsBolt.class);
+    private Logger countLogger = LoggerFactory.getLogger("tourist.count");
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
@@ -28,6 +29,7 @@ public class SmsBolt extends BaseBasicBolt {
         long time = input.getLong(1);
         try {
             logger.info(String.format("Send sms to:%s on signal time:%s/%s ", imsi, getTime(time), time));
+            countLogger.info(String.format("%s:%s/%s", imsi, getTime(time), time));
         } catch (ParseException e) {
             e.printStackTrace();
         }
