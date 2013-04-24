@@ -21,7 +21,7 @@ import java.util.TimeZone;
  */
 public class SmsBolt extends BaseBasicBolt {
     private Logger logger = LoggerFactory.getLogger(SmsBolt.class);
-    private Logger countLogger = LoggerFactory.getLogger("tourist.count");
+    private Logger countLogger = LoggerFactory.getLogger("wlan.count");
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
