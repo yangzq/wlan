@@ -108,6 +108,7 @@ public class WlanTopologyTest {
         TopologyBuilder builder = wlan.storm.WlanTopology.getTopologyBuilder();
         Config conf = new Config();
         conf.setDebug(true);
+//        conf.put(Config.TOPOLOGY_DEBUG, true);
 
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("wlan", conf, builder.createTopology());

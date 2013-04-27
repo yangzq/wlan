@@ -8,10 +8,7 @@ import backtype.storm.tuple.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+import wlan.util.TimeUtil;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,19 +24,13 @@ public class SmsBolt extends BaseBasicBolt {
     public void execute(Tuple input, BasicOutputCollector collector) {
         String imsi = input.getString(0);
         long time = input.getLong(1);
-        try {
-            logger.info(String.format("Send sms to:%s on signal time:%s/%s ", imsi, getTime(time), time));
-            countLogger.info(String.format("%s:%s/%s", imsi, getTime(time), time));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        System.out.println(String.format("Send sms to:%s on signal time:%s/%s ", imsi, TimeUtil.getTime(time), time));
+        logger.info(String.format("Send sms to:%s on signal time:%s/%s ", imsi, TimeUtil.getTime(time), time));
+        countLogger.info(String.format("%s:%s/%s", imsi, TimeUtil.getTime(time), time));
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
     }
 
-    private static String getTime(long s) throws ParseException {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(s - TimeZone.getDefault().getRawOffset()));
-    }
 }

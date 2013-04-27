@@ -56,7 +56,8 @@ public class WlanTopology {
                 .fieldsGrouping(signallingSpout2, SignallingSpout.SIGNALLING, new Fields("imsi"));
         builder.setBolt(wapBolt, new WapBolt(), 1)
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.PRECONDITION, new Fields("imsi"))
-                .allGrouping(preconditionBolt, PreconditionBolt.UPDATETIME);
+//                .allGrouping(preconditionBolt, PreconditionBolt.UPDATETIME);
+                .fieldsGrouping(preconditionBolt, PreconditionBolt.UPDATETIME, new Fields("imsi"));
         builder.setBolt(smsBolt, new SmsBolt(), 1)
                 .globalGrouping(wapBolt, WapBolt.WAPSTREAM);
         return builder;

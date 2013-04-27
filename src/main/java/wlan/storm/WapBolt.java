@@ -11,6 +11,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import org.apache.commons.lang.StringUtils;
 import wlan.util.EventTypeConst;
+import wlan.util.TimeUtil;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -65,34 +66,22 @@ public class WapBolt extends BaseBasicBolt {
                 boolean match = checkUser(userData, time);
                 if (match) {
                     userMap.remove(imsi);
-                    try {
-                        System.out.println(String.format("match: %s, signal time:%s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeUseSet.toArray()), ","), getTime(time), time));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
+                    System.out.println(String.format("match: %s, signal time:%s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeUseSet.toArray()), ","), TimeUtil.getTime(time), time));
                     outputCollector.emit(WAPSTREAM, new Values(imsi, time));
                 } else {
                     userMap.put(imsi, userData);
-                    try {
-                        System.out.println(String.format("add time: %s : %s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeUseSet.toArray()), ","), getTime(time), time));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
+                    System.out.println(String.format("add time: %s : %s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeUseSet.toArray()), ","), TimeUtil.getTime(time), time));
                 }
             } else if (eventType.equals(EventTypeConst.EVENT_WAP_DISCONN)) {
                 userMap.remove(imsi);
                 // 考虑乱序，只删除断开连接信令时间之前的信令
-                try {
-                    System.out.println(String.format("remove from userMap: %s, on time: %s/%s", imsi, getTime(time), time));
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
+                    System.out.println(String.format("remove from userMap: %s, on time: %s/%s", imsi, TimeUtil.getTime(time), time));
             } else {
                 // do nothing
             }
         } else if (input.getSourceStreamId().equals(PreconditionBolt.UPDATETIME)) {
             nowTime = input.getLong(0);
-            updateGlobalTime(nowTime);
+            updateGlobalTime(nowTime, input.getString(1));
         }
 
     }
@@ -117,13 +106,11 @@ public class WapBolt extends BaseBasicBolt {
         }
     }
 
-    private void updateGlobalTime(long time) {
-//        if (time == 1357892751000L) {
-//            System.out.println();
-//        }
+    private void updateGlobalTime(long time, String signalImsi) {
         for (Iterator iterator = userMap.entrySet().iterator(); iterator.hasNext(); ) {
             Map.Entry entry = (Map.Entry) iterator.next();
             String imsi = (String) entry.getKey();
+            if (imsi.equals(signalImsi)) return; // 本人的修改全局时间信令不做处理
             UserData userData = (UserData) entry.getValue();
             HashSet<Long> timeSet = (HashSet<Long>) userData.getTimeUseSet();
             removeOutTime(timeSet, time);
@@ -133,11 +120,7 @@ public class WapBolt extends BaseBasicBolt {
             if (matched) {
                 iterator.remove();
                 outputCollector.emit(WAPSTREAM, new Values(imsi, time));
-                try {
-                    System.out.println(String.format("match: %s, signal time:%s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeSet.toArray()), ","), getTime(time), time));
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
+                    System.out.println(String.format("match: %s, signal time:%s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeSet.toArray()), ","), TimeUtil.getTime(time), time));
             }
         }
     }
@@ -147,18 +130,10 @@ public class WapBolt extends BaseBasicBolt {
         declarer.declareStream(WAPSTREAM, new Fields("imsi", "time"));
     }
 
-    private static String getTime(long s) throws ParseException {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(s - TimeZone.getDefault().getRawOffset()));
-    }
-
     private String[] getTimeArr(Object[] mmArr) {
         String[] fromatTime = new String[mmArr.length];
         for (int i = 0; i < mmArr.length; i++) {
-            try {
-                fromatTime[i] = getTime((Long) mmArr[i]);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+                fromatTime[i] = TimeUtil.getTime((Long) mmArr[i]);
         }
         return fromatTime;
     }

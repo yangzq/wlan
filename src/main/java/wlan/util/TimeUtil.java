@@ -22,7 +22,7 @@ public class TimeUtil {
      * @return String "yyyy-MM-dd HH:mm:ss"
      */
     public static String getTime(long s) {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(s - TimeZone.getDefault().getRawOffset()));
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(s - TimeZone.getDefault().getRawOffset()));
     }
 
     public static void main(String[] args) {

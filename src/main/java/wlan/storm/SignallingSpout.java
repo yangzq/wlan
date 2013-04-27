@@ -6,8 +6,10 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import wlan.util.NioServer;
 
 import java.io.IOException;
@@ -39,11 +41,11 @@ public class SignallingSpout extends BaseRichSpout {
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.spoutOutputCollector = spoutOutputCollector;
-        queue = new LinkedBlockingQueue<String>(1000);
+        queue = new LinkedBlockingQueue<String>(10000);
         NioServer.Listener listener = new NioServer.Listener() {
             @Override
             public void messageReceived(String message) throws Exception {
-                if (logger.isInfoEnabled()) {
+                if (logger.isDebugEnabled()) {
                     logger.info(String.format("spout received:%s", message));
                 }
                 queue.put(message); // 往队列中添加信令时阻塞以保证数据不丢失
@@ -68,7 +70,7 @@ public class SignallingSpout extends BaseRichSpout {
                 logger.debug(format("[%s]:%s", SIGNALLING, tuple.toString()));
             }
             spoutOutputCollector.emit(SIGNALLING, tuple);
-            if (logger.isInfoEnabled()) {
+            if (logger.isDebugEnabled()) {
                 logger.info(String.format("spout sent:%s,%s,%s", tuple.get(0), tuple.get(1), tuple.get(2)));
             }
         }

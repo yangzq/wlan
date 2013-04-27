@@ -1,11 +1,8 @@
 package wlan.storm;
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
-import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
@@ -13,8 +10,6 @@ import backtype.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import wlan.util.KbUtils;
-
-import java.util.Map;
 
 /**
  * 先决条件判断，当前用于判断手机是否有wifi功能
@@ -25,7 +20,6 @@ import java.util.Map;
  */
 public class PreconditionBolt extends BaseBasicBolt {
     private Logger logger = LoggerFactory.getLogger(PreconditionBolt.class);
-//    private OutputCollector outputCollector;
     private BasicOutputCollector outputCollector;
     public static final String PRECONDITION = "preconditionStream";
     public static final String UPDATETIME = "updateTimeStream";
@@ -52,7 +46,7 @@ public class PreconditionBolt extends BaseBasicBolt {
             }
         }
         if (time > lastSignalTime){
-            outputCollector.emit(UPDATETIME, new Values(time));
+            outputCollector.emit(UPDATETIME, new Values(time, imsi));
             lastSignalTime = time;
         }
     }
@@ -60,7 +54,7 @@ public class PreconditionBolt extends BaseBasicBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream(PRECONDITION, new Fields("imsi", "eventType", "time", "lac", "cell"));
-        outputFieldsDeclarer.declareStream(UPDATETIME, new Fields("time"));
+        outputFieldsDeclarer.declareStream(UPDATETIME, new Fields("time", "imsi"));
     }
 
 }
