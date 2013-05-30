@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 
+import backtype.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,8 +63,12 @@ public class SignallingSpout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
+        Utils.sleep(10);
         String message = null;
+        int i = 0;
         while ((message = queue.poll()) != null) {
+            if (++i % 2000 == 0)
+                Utils.sleep(10);
             String[] columns = message.split(",");
             Values tuple = new Values(columns[0], columns[1], Long.parseLong(columns[2]), columns[4], columns[5]);
             if (logger.isDebugEnabled()) {

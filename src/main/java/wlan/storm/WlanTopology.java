@@ -25,7 +25,7 @@ public class WlanTopology {
 
         if (args!=null && args.length > 0) { // 远程模式
             System.out.println("Remote mode");
-            conf.setNumWorkers(10);
+            conf.setNumWorkers(8);
             conf.setMaxSpoutPending(100);
             conf.setNumAckers(10);
             conf.setMessageTimeoutSecs(5);
@@ -48,6 +48,9 @@ public class WlanTopology {
         String preconditionBolt = "preconditionBolt";
         String wapBolt = "wapBolt";
         String smsBolt = "smsBolt";
+        String wholeBolt = "wholeBolt";
+
+        /**
         builder.setSpout(signallingSpout1, new SignallingSpout(5002));
         builder.setSpout(signallingSpout2, new SignallingSpout(5003));
 
@@ -60,6 +63,11 @@ public class WlanTopology {
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.UPDATETIME, new Fields("imsi"));
         builder.setBolt(smsBolt, new SmsBolt(), 1)
                 .globalGrouping(wapBolt, WapBolt.WAPSTREAM);
+        return builder;
+         **/
+        builder.setSpout(signallingSpout1, new SignallingSpout(5002));
+        builder.setBolt(wholeBolt, new WholeBolt(), 4)
+                .fieldsGrouping(signallingSpout1, SignallingSpout.SIGNALLING, new Fields("imsi"));
         return builder;
     }
 }
