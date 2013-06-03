@@ -66,7 +66,7 @@ public class WlanTopology {
         return builder;
          **/
         builder.setSpout(signallingSpout1, new SignallingSpout(5002));
-        builder.setBolt(wholeBolt, new WholeBolt(), 4)
+        builder.setBolt(wholeBolt, new WholeBolt(), 6)
                 .fieldsGrouping(signallingSpout1, SignallingSpout.SIGNALLING, new Fields("imsi"));
         return builder;
     }
