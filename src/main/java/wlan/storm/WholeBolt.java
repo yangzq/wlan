@@ -127,8 +127,6 @@ public class WholeBolt extends BaseBasicBolt {
             UserData userData = entry.getValue();
             HashSet<Long> timeSet = (HashSet<Long>) userData.getTimeUseSet();
             removeOutTime(timeSet, time);
-            userData.setTimeUseSet(timeSet);
-            userMap.put(imsi, userData);
             boolean matched = checkUser(userData, time);
             if (matched) {
                 iterator.remove();
