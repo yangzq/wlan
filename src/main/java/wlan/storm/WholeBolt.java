@@ -23,7 +23,7 @@ public class WholeBolt extends BaseBasicBolt {
     private long lastSignalTime = 0L;
     private long nowTime = 0L;
     private final long timeInterval = 15 * 60 * 1000L;
-    private Map userMap = new HashMap<String, UserData>();
+    private Map<String, UserData> userMap = new HashMap<String, UserData>();
     private Logger countLogger = LoggerFactory.getLogger("wlan.count");
 
     @Override
@@ -56,9 +56,9 @@ public class WholeBolt extends BaseBasicBolt {
         long time = time1;
         if (time < nowTime - timeInterval) return;
         if (eventType.equals(EventTypeConst.EVENT_WAP_CONN)) {
-            if (userMap.containsKey(imsi)) {
-                userMap.remove(imsi);
-            }
+//            if (userMap.containsKey(imsi)) {
+//                userMap.remove(imsi);
+//            }
             UserData userData = new UserData(time, new HashSet<Long>());
             userMap.put(imsi, userData);
 //                connTime = time;
@@ -66,19 +66,20 @@ public class WholeBolt extends BaseBasicBolt {
             UserData userData = (UserData) userMap.get(imsi);
             if (userData == null){
                 userData = new UserData(0, new HashSet<Long>());
+                userMap.put(imsi, userData);
             }
-            if (userData.getTimeUseSet() == null) {
-                userData.setTimeUseSet(new HashSet<Long>());
-            }
-            if (userData.getConnTime() == 0L) {
-                userData.setConnTime(time);
-            }
-            userMap.put(imsi, userData);
+//            if (userData.getTimeUseSet() == null) {
+//                userData.setTimeUseSet(new HashSet<Long>());
+//            }
+//            if (userData.getConnTime() == 0L) {
+//                userData.setConnTime(time);
+//            }
+
 
             HashSet<Long> timeUseSet = (HashSet<Long>) userData.getTimeUseSet();
             timeUseSet.add(time);
             removeOutTime(timeUseSet, time);
-            userData.setTimeUseSet(timeUseSet);
+//            userData.setTimeUseSet(timeUseSet);
             boolean match = checkUser(userData, time);
             if (match) {
                 userMap.remove(imsi);
@@ -87,7 +88,7 @@ public class WholeBolt extends BaseBasicBolt {
 //                outputCollector.emit(WAPSTREAM, new Values(imsi, time));
 //                System.out.println(String.format("Send sms to:%s on signal time:%s/%s ", imsi, TimeUtil.getTime(time), time));
             } else {
-                userMap.put(imsi, userData);
+//                userMap.put(imsi, userData);
 //                System.out.println(String.format("add time: %s : %s; on time: %s/%s", imsi, StringUtils.join(getTimeArr(timeUseSet.toArray()), ","), TimeUtil.getTime(time), time));
             }
         } else if (eventType.equals(EventTypeConst.EVENT_WAP_DISCONN)) {
@@ -119,11 +120,11 @@ public class WholeBolt extends BaseBasicBolt {
     }
 
     private void updateGlobalTime(long time, String signalImsi) {
-        for (Iterator iterator = userMap.entrySet().iterator(); iterator.hasNext(); ) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            String imsi = (String) entry.getKey();
+        for (Iterator<Map.Entry<String, UserData>> iterator = userMap.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<String, UserData> entry = iterator.next();
+            String imsi = entry.getKey();
             if (imsi.equals(signalImsi)) return; // 本人的修改全局时间信令不做处理
-            UserData userData = (UserData) entry.getValue();
+            UserData userData = entry.getValue();
             HashSet<Long> timeSet = (HashSet<Long>) userData.getTimeUseSet();
             removeOutTime(timeSet, time);
             userData.setTimeUseSet(timeSet);
