@@ -43,10 +43,10 @@ public class WholeBolt extends BaseBasicBolt {
         } else {
         }
 
-        if (time > lastSignalTime){
-            updateGlobalTime(time, imsi);
-            lastSignalTime = time;
-        }
+//       k if (time > lastSignalTime + 1000){
+//            updateGlobalTime(time, imsi);
+//            lastSignalTime = time;
+//        }
 
     }
 

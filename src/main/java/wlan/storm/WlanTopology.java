@@ -25,9 +25,9 @@ public class WlanTopology {
 
         if (args!=null && args.length > 0) { // 远程模式
             System.out.println("Remote mode");
-            conf.setNumWorkers(8);
+            conf.setNumWorkers(12);
             conf.setMaxSpoutPending(100);
-            conf.setNumAckers(10);
+            conf.setNumAckers(0);
             conf.setMessageTimeoutSecs(5);
             StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
         } else {
@@ -45,12 +45,13 @@ public class WlanTopology {
         TopologyBuilder builder = new TopologyBuilder();
         String signallingSpout1 = "signallingSpout1";
         String signallingSpout2 = "signallingSpout2";
+        String signallingSpout3 = "signallingSpout3";
         String preconditionBolt = "preconditionBolt";
         String wapBolt = "wapBolt";
         String smsBolt = "smsBolt";
         String wholeBolt = "wholeBolt";
 
-        /**
+
         builder.setSpout(signallingSpout1, new SignallingSpout(5002));
         builder.setSpout(signallingSpout2, new SignallingSpout(5003));
 
@@ -59,15 +60,20 @@ public class WlanTopology {
                 .fieldsGrouping(signallingSpout2, SignallingSpout.SIGNALLING, new Fields("imsi"));
         builder.setBolt(wapBolt, new WapBolt(), 2)
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.PRECONDITION, new Fields("imsi"))
-//                .allGrouping(preconditionBolt, PreconditionBolt.UPDATETIME);
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.UPDATETIME, new Fields("imsi"));
         builder.setBolt(smsBolt, new SmsBolt(), 1)
                 .globalGrouping(wapBolt, WapBolt.WAPSTREAM);
         return builder;
-         **/
+
+        /**
         builder.setSpout(signallingSpout1, new SignallingSpout(5002));
+//        builder.setSpout(signallingSpout2, new SignallingSpout(5003));
+//        builder.setSpout(signallingSpout3, new SignallingSpout(5004));
         builder.setBolt(wholeBolt, new WholeBolt(), 6)
                 .fieldsGrouping(signallingSpout1, SignallingSpout.SIGNALLING, new Fields("imsi"));
+//                .fieldsGrouping(signallingSpout2, SignallingSpout.SIGNALLING, new Fields("imsi"))
+//                .fieldsGrouping(signallingSpout3, SignallingSpout.SIGNALLING, new Fields("imsi"));
         return builder;
+        **/
     }
 }
