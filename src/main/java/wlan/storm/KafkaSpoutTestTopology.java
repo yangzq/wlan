@@ -15,10 +15,11 @@ import storm.kafka.ZkHosts;
 import storm.kafka.KafkaSpout;
 import storm.kafka.SpoutConfig;
 import storm.kafka.StringScheme;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+//import java.util.Arrays;
 
 /**
  * Created by yangzq on 2014/4/16.
@@ -45,10 +46,10 @@ public class KafkaSpoutTestTopology {
     }
 
     public StormTopology buildTopology() {
-        SpoutConfig kafkaConfig = new SpoutConfig(brokerHosts, "storm-sentence", "", "storm");
+        SpoutConfig kafkaConfig = new SpoutConfig(brokerHosts, "my-replicated-topic", "", "storm");
         kafkaConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("words", new KafkaSpout(kafkaConfig), 10);
+        builder.setSpout("words", new KafkaSpout(kafkaConfig), 1);
         builder.setBolt("print", new PrinterBolt()).shuffleGrouping("words");
         return builder.createTopology();
     }
@@ -66,10 +67,10 @@ public class KafkaSpoutTestTopology {
             String dockerIp = args[2];
             config.setNumWorkers(2);
             config.setMaxTaskParallelism(5);
-            config.put(Config.NIMBUS_HOST, dockerIp);
-            config.put(Config.NIMBUS_THRIFT_PORT, 49627);
-            config.put(Config.STORM_ZOOKEEPER_PORT, 49181);
-            config.put(Config.STORM_ZOOKEEPER_SERVERS, Arrays.asList(dockerIp));
+//            config.put(Config.NIMBUS_HOST, "10.161.192.230");
+//            config.put(Config.NIMBUS_THRIFT_PORT, 6627);
+//            config.put(Config.STORM_ZOOKEEPER_PORT, 2183);
+//            config.put(Config.STORM_ZOOKEEPER_SERVERS, Arrays.asList(dockerIp));
             StormSubmitter.submitTopology(name, config, stormTopology);
         } else {
             config.setNumWorkers(2);
