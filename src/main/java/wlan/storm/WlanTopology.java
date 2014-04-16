@@ -27,7 +27,7 @@ public class WlanTopology {
             System.out.println("Remote mode");
             conf.setNumWorkers(12);
             conf.setMaxSpoutPending(100);
-            conf.setNumAckers(0);
+            conf.setNumAckers(2);
             conf.setMessageTimeoutSecs(5);
             StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
         } else {
@@ -43,22 +43,23 @@ public class WlanTopology {
 
     public static TopologyBuilder getTopologyBuilder() {
         TopologyBuilder builder = new TopologyBuilder();
-        String signallingSpout1 = "signallingSpout1";
+//        String signallingSpout1 = "signallingSpout1";
         String signallingSpout2 = "signallingSpout2";
-        String signallingSpout3 = "signallingSpout3";
+//        String signallingSpout3 = "signallingSpout3";
         String preconditionBolt = "preconditionBolt";
         String wapBolt = "wapBolt";
         String smsBolt = "smsBolt";
         String wholeBolt = "wholeBolt";
 
-
-        builder.setSpout(signallingSpout1, new SignallingSpout(5002));
+        //两个Spout入口，分别监控本机的5002、5003端口
+//        builder.setSpout(signallingSpout1, new SignallingSpout(5002));
         builder.setSpout(signallingSpout2, new SignallingSpout(5003));
 
-        builder.setBolt(preconditionBolt, new PreconditionBolt(), 2)
-                .fieldsGrouping(signallingSpout1, SignallingSpout.SIGNALLING, new Fields("imsi"))
+        builder.setBolt(preconditionBolt, new PreconditionBolt(), 2).setNumTasks(2)
+//                .fieldsGrouping(signallingSpout1, SignallingSpout.SIGNALLING, new Fields("imsi"))
                 .fieldsGrouping(signallingSpout2, SignallingSpout.SIGNALLING, new Fields("imsi"));
-        builder.setBolt(wapBolt, new WapBolt(), 2)
+        
+        builder.setBolt(wapBolt, new WapBolt(), 2).setNumTasks(4)
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.PRECONDITION, new Fields("imsi"))
                 .fieldsGrouping(preconditionBolt, PreconditionBolt.UPDATETIME, new Fields("imsi"));
         builder.setBolt(smsBolt, new SmsBolt(), 1)

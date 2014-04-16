@@ -8,19 +8,18 @@
     <packaging>jar</packaging>
 
     <name>wlan</name>
-    <url>https://github.com/nathanmarz/storm-starter</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <repositories>
         <repository>
-            <id>github-releases</id>
-            <url>http://oss.sonatype.org/content/repositories/github-releases/</url>
+            <id>central</id>
+            <url>http://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
             <id>clojars.org</id>
-            <url>http://clojars.org/repo</url>
+            <url>https://clojars.org/repo</url>
         </repository>
         <repository>
             <id>twitter4j</id>
@@ -30,9 +29,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>storm</groupId>
-            <artifactId>storm</artifactId>
-            <version>0.8.2</version>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-core</artifactId>
+            <version>0.9.1-incubating</version>
             <!--<scope>provided</scope>-->
         </dependency>
         <dependency>
@@ -50,6 +49,11 @@
             <groupId>org.apache.mina</groupId>
             <artifactId>mina-core</artifactId>
             <version>2.0.7</version>
+        </dependency>
+        <dependency>
+            <groupId>net.wurstmeister.storm</groupId>
+            <artifactId>storm-kafka-0.8-plus</artifactId>
+            <version>0.4.0</version>
         </dependency>
         <!--<dependency>-->
         <!--<groupId>org.slf4j</groupId>-->
